@@ -2,14 +2,17 @@ import { Moon, Sun, LogIn } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes";
 
 const Settings = () => {
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
-  const handleThemeChange = (theme: string) => {
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
     toast({
       title: "Theme Changed",
-      description: `Switched to ${theme} mode`,
+      description: `Switched to ${newTheme} mode`,
     });
   };
 
@@ -38,25 +41,29 @@ const Settings = () => {
           <div className="grid grid-cols-2 gap-3">
             <Card
               onClick={() => handleThemeChange("light")}
-              className="p-4 cursor-pointer hover:shadow-glow transition-all"
+              className={`p-4 cursor-pointer hover:shadow-glow transition-all ${
+                theme === "light" ? "ring-2 ring-primary" : ""
+              }`}
             >
               <div className="flex flex-col items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-gradient-gold flex items-center justify-center">
                   <Sun className="w-6 h-6 text-foreground" />
                 </div>
-                <span className="font-medium">Light</span>
+                <span className="font-medium text-foreground">Light</span>
               </div>
             </Card>
 
             <Card
               onClick={() => handleThemeChange("dark")}
-              className="p-4 cursor-pointer hover:shadow-glow transition-all"
+              className={`p-4 cursor-pointer hover:shadow-glow transition-all ${
+                theme === "dark" ? "ring-2 ring-primary" : ""
+              }`}
             >
               <div className="flex flex-col items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-gradient-islamic flex items-center justify-center">
                   <Moon className="w-6 h-6 text-white" />
                 </div>
-                <span className="font-medium">Dark</span>
+                <span className="font-medium text-foreground">Dark</span>
               </div>
             </Card>
           </div>
