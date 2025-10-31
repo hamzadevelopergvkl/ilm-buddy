@@ -36,9 +36,11 @@ const Sidebar = ({ activeSection, onSectionChange, isOpen, onClose }: SidebarPro
       
       {/* Sidebar */}
       <div className={cn(
-        "fixed lg:static inset-y-0 left-0 z-50 w-64 h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col transition-transform duration-300 lg:translate-x-0",
+        "fixed lg:static inset-y-0 left-0 z-50 w-64 h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col transition-transform duration-300 lg:translate-x-0 backdrop-blur-none",
         isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      )}
+        style={{ backgroundColor: 'hsl(var(--sidebar-background))' }}
+      >
         {/* Logo and Title */}
         <div className="p-4 sm:p-6 border-b border-sidebar-border">
           <div className="flex items-center justify-between gap-3">
