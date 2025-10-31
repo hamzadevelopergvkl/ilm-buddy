@@ -18,6 +18,7 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState("ai-chat");
   const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,10 +37,15 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleChatSelect = (chatId: string) => {
+    setActiveChatId(chatId);
+    setActiveSection("ai-chat");
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case "ai-chat":
-        return <AIChat user={user} />;
+        return <AIChat user={user} activeChatId={activeChatId} onChatCreated={setActiveChatId} />;
       case "duas":
         return <Duas />;
       case "quran":
@@ -53,9 +59,9 @@ const Index = () => {
       case "calendar":
         return <IslamicCalendar />;
       case "settings":
-        return <Settings user={user} />;
+        return <Settings user={user} onChatSelect={handleChatSelect} />;
       default:
-        return <AIChat user={user} />;
+        return <AIChat user={user} activeChatId={activeChatId} onChatCreated={setActiveChatId} />;
     }
   };
 

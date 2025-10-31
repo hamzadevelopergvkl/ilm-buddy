@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Plus, Image as ImageIcon, Sparkles } from "lucide-react";
+import { Send, Plus, Image as ImageIcon, Sparkles, MessageSquarePlus } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -13,15 +13,18 @@ interface Message {
 
 interface AIChatProps {
   user: User | null;
+  activeChatId?: string | null;
+  onChatCreated?: (chatId: string) => void;
 }
 
-const AIChat = ({ user }: AIChatProps) => {
+const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content: "السلام عليكم ورحمة الله وبركاته 🌙\n\nWelcome to Deen Buddy! I'm here to help you with Islamic knowledge, guidance, and spiritual support. How may I assist you today? 💚"
     }
   ]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(activeChatId || null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -37,15 +40,108 @@ const AIChat = ({ user }: AIChatProps) => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (activeChatId) {
+      loadChat(activeChatId);
+    }
+  }, [activeChatId]);
+
+  const loadChat = async (chatId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("chat_id", chatId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setMessages(data.map(msg => ({ role: msg.role as "user" | "assistant", content: msg.content })));
+        setCurrentChatId(chatId);
+      }
+    } catch (error) {
+      console.error("Error loading chat:", error);
+    }
+  };
+
+  const createNewChat = async (firstMessage: string) => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from("chats")
+        .insert({
+          user_id: user.id,
+          title: firstMessage.substring(0, 50) + (firstMessage.length > 50 ? "..." : "")
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCurrentChatId(data.id);
+      onChatCreated?.(data.id);
+      return data.id;
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      return null;
+    }
+  };
+
+  const saveMessage = async (chatId: string, role: "user" | "assistant", content: string) => {
+    try {
+      await supabase
+        .from("messages")
+        .insert({
+          chat_id: chatId,
+          role,
+          content
+        });
+    } catch (error) {
+      console.error("Error saving message:", error);
+    }
+  };
+
+  const handleNewChat = () => {
+    setMessages([
+      {
+        role: "assistant",
+        content: "السلام عليكم ورحمة الله وبركاته 🌙\n\nWelcome to Deen Buddy! I'm here to help you with Islamic knowledge, guidance, and spiritual support. How may I assist you today? 💚"
+      }
+    ]);
+    setCurrentChatId(null);
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to save your chats.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const userMessage: Message = { role: "user", content: input };
+    const messageContent = input;
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
+      // Create chat if it doesn't exist
+      let chatId = currentChatId;
+      if (!chatId) {
+        chatId = await createNewChat(messageContent);
+        if (!chatId) throw new Error("Failed to create chat");
+      }
+
+      // Save user message
+      await saveMessage(chatId, "user", messageContent);
+
       const { data, error } = await supabase.functions.invoke("ai-chat", {
         body: { messages: [...messages, userMessage] }
       });
@@ -53,7 +149,11 @@ const AIChat = ({ user }: AIChatProps) => {
       if (error) throw error;
 
       if (data?.response) {
-        setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
+        const assistantMessage = { role: "assistant" as const, content: data.response };
+        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Save assistant response
+        await saveMessage(chatId, "assistant", data.response);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -144,16 +244,31 @@ const AIChat = ({ user }: AIChatProps) => {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="p-6 border-b border-border bg-card">
-        <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-primary" />
-          AI Chat
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">Ask me anything about Islam</p>
+      <div className="p-4 sm:p-6 border-b border-border bg-card">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              AI Chat
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Ask me anything about Islam</p>
+          </div>
+          {user && (
+            <Button
+              onClick={handleNewChat}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <MessageSquarePlus className="w-4 h-4" />
+              <span className="hidden sm:inline">New Chat</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -185,7 +300,7 @@ const AIChat = ({ user }: AIChatProps) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-6 border-t border-border bg-card">
+      <div className="p-3 sm:p-6 border-t border-border bg-card">
         <div className="flex gap-2">
           <div className="relative">
             <Button
