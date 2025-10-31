@@ -171,6 +171,10 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Ask user for custom prompt
+    const customPrompt = window.prompt("What would you like to know about this image?", "Please analyze this image from an Islamic perspective.");
+    if (!customPrompt) return;
+
     setIsLoading(true);
     try {
       const reader = new FileReader();
@@ -179,13 +183,13 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
         
         const userMessage: Message = { 
           role: "user", 
-          content: "I've uploaded an image. Can you analyze it from an Islamic perspective?" 
+          content: customPrompt
         };
         setMessages(prev => [...prev, userMessage]);
 
         const { data, error } = await supabase.functions.invoke("vision-chat", {
           body: { 
-            prompt: "Please analyze this image from an Islamic perspective.",
+            prompt: customPrompt,
             imageData: base64
           }
         });
