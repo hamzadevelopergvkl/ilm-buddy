@@ -30,6 +30,8 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imageMode, setImageMode] = useState<"text" | "upload" | "generate">("text");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -113,6 +115,8 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
       }
     ]);
     setCurrentChatId(null);
+    setSelectedFile(null);
+    setImageMode("text");
   };
 
   const handleSend = async () => {
@@ -127,35 +131,17 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
       return;
     }
 
-    const userMessage: Message = { role: "user", content: input };
     const messageContent = input;
-    setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
-      // Create chat if it doesn't exist
-      let chatId = currentChatId;
-      if (!chatId) {
-        chatId = await createNewChat(messageContent);
-        if (!chatId) throw new Error("Failed to create chat");
-      }
-
-      // Save user message
-      await saveMessage(chatId, "user", messageContent);
-
-      const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: { messages: [...messages, userMessage] }
-      });
-
-      if (error) throw error;
-
-      if (data?.response) {
-        const assistantMessage = { role: "assistant" as const, content: data.response };
-        setMessages(prev => [...prev, assistantMessage]);
-        
-        // Save assistant response
-        await saveMessage(chatId, "assistant", data.response);
+      if (imageMode === "upload" && selectedFile) {
+        await handleImageUploadWithPrompt(selectedFile, messageContent);
+      } else if (imageMode === "generate") {
+        await handleGenerateImageWithPrompt(messageContent);
+      } else {
+        await handleTextMessage(messageContent);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -166,84 +152,104 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
       });
     } finally {
       setIsLoading(false);
+      setSelectedFile(null);
+      setImageMode("text");
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextMessage = async (messageContent: string) => {
+    const userMessage: Message = { role: "user", content: messageContent };
+    setMessages(prev => [...prev, userMessage]);
+
+    // Create chat if it doesn't exist
+    let chatId = currentChatId;
+    if (!chatId) {
+      chatId = await createNewChat(messageContent);
+      if (!chatId) throw new Error("Failed to create chat");
+    }
+
+    // Save user message
+    await saveMessage(chatId, "user", messageContent);
+
+    const { data, error } = await supabase.functions.invoke("ai-chat", {
+      body: { messages: [...messages, userMessage] }
+    });
+
+    if (error) throw error;
+
+    if (data?.response) {
+      const assistantMessage = { role: "assistant" as const, content: data.response };
+      setMessages(prev => [...prev, assistantMessage]);
+      
+      // Save assistant response
+      await saveMessage(chatId, "assistant", data.response);
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Ask user for custom prompt
-    const customPrompt = window.prompt("What would you like to know about this image?", "Please analyze this image from an Islamic perspective.");
-    if (!customPrompt) return;
-
-    setIsLoading(true);
-    try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        
-        const userMessage: Message = { 
-          role: "user", 
-          content: customPrompt
-        };
-        setMessages(prev => [...prev, userMessage]);
-
-        const { data, error } = await supabase.functions.invoke("vision-chat", {
-          body: { 
-            prompt: customPrompt,
-            imageData: base64
-          }
-        });
-
-        if (error) throw error;
-
-        if (data?.response) {
-          setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to process image. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-      setShowOptions(false);
-    }
+    
+    setSelectedFile(file);
+    setImageMode("upload");
+    setShowOptions(false);
+    toast({
+      title: "Image selected",
+      description: "Now type your prompt and send"
+    });
   };
 
-  const handleGenerateImage = async () => {
-    const prompt = window.prompt("Describe the Islamic image you want to create:");
-    if (!prompt) return;
+  const handleImageUploadWithPrompt = async (file: File, prompt: string) => {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      
+      const userMessage: Message = { 
+        role: "user", 
+        content: prompt
+      };
+      setMessages(prev => [...prev, userMessage]);
 
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt }
+      const { data, error } = await supabase.functions.invoke("vision-chat", {
+        body: { 
+          prompt: prompt,
+          imageData: base64
+        }
       });
 
       if (error) throw error;
 
-      if (data?.imageUrl) {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: `Here's the generated image:\n\n![Generated Image](${data.imageUrl})`
-        }]);
+      if (data?.response) {
+        setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
       }
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate image. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-      setShowOptions(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGenerateImageClick = () => {
+    setImageMode("generate");
+    setShowOptions(false);
+    toast({
+      title: "Image generation mode",
+      description: "Type what you want to create and send"
+    });
+  };
+
+  const handleGenerateImageWithPrompt = async (prompt: string) => {
+    const userMessage: Message = { role: "user", content: prompt };
+    setMessages(prev => [...prev, userMessage]);
+
+    const { data, error } = await supabase.functions.invoke("generate-image", {
+      body: { prompt }
+    });
+
+    if (error) throw error;
+
+    if (data?.imageUrl) {
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: `Here's the generated image:\n\n![Generated Image](${data.imageUrl})`
+      }]);
     }
   };
 
@@ -361,6 +367,23 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
 
       {/* Input Area */}
       <div className="p-3 sm:p-6 border-t border-border bg-card">
+        {(selectedFile || imageMode === "generate") && (
+          <div className="mb-2 p-2 bg-muted rounded-md flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {selectedFile ? `📎 ${selectedFile.name}` : "🎨 Image generation mode"}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedFile(null);
+                setImageMode("text");
+              }}
+            >
+              ✕
+            </Button>
+          </div>
+        )}
         <div className="flex gap-2">
           <div className="relative">
             <Button
@@ -382,7 +405,7 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
                   <span>Upload Image</span>
                 </button>
                 <button
-                  onClick={handleGenerateImage}
+                  onClick={handleGenerateImageClick}
                   className="flex items-center gap-2 px-4 py-2 hover:bg-accent rounded-md w-full text-left transition-colors"
                 >
                   <Sparkles className="w-4 h-4" />
@@ -396,7 +419,7 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={handleImageUpload}
+              onChange={handleImageSelect}
             />
           </div>
 
@@ -404,7 +427,13 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Type your message..."
+            placeholder={
+              imageMode === "upload" 
+                ? "Type your question about the image..." 
+                : imageMode === "generate"
+                ? "Describe the image you want to create..."
+                : "Type your message..."
+            }
             className="flex-1"
             disabled={isLoading}
           />
