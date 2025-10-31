@@ -297,14 +297,7 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
                 remarkPlugins={[remarkGfm]}
                 components={{
                   img: ({ node, ...props }) => (
-                    <img 
-                      className="rounded-lg max-w-full h-auto my-2" 
-                      onError={(e) => {
-                        console.error("Image failed to load:", props.src);
-                        e.currentTarget.style.display = "none";
-                      }}
-                      {...props} 
-                    />
+                    <img className="rounded-lg max-w-full h-auto" {...props} />
                   ),
                   a: ({ node, ...props }) => (
                     <a className="story-link" target="_blank" rel="noreferrer" {...props} />
