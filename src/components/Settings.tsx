@@ -238,7 +238,7 @@ const Settings = ({ user, onChatSelect }: SettingsProps) => {
           <Card className="p-6">
             <div className="text-center space-y-2">
               <div className="text-4xl mb-2">🕌</div>
-              <h4 className="font-semibold text-foreground">ilm AI</h4>
+              <h4 className="font-semibold text-foreground">Deen Buddy</h4>
               <p className="text-sm text-muted-foreground">
                 Your Islamic companion for spiritual growth and knowledge
               </p>

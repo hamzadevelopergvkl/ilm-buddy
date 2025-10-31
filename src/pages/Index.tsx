@@ -86,7 +86,7 @@ const Index = () => {
           </Button>
           <div className="flex items-center gap-2">
             <span className="text-2xl">🕌</span>
-            <h1 className="text-lg font-bold text-foreground">ilm AI</h1>
+            <h1 className="text-lg font-bold text-foreground">Deen Buddy</h1>
           </div>
         </div>
         

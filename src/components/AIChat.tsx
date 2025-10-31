@@ -23,7 +23,7 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "السلام عليكم ورحمة الله وبركاته 🌙\n\nWelcome to ilm AI! I'm here to help you with Islamic knowledge, guidance, and spiritual support. How may I assist you today? 💚"
+      content: "السلام عليكم ورحمة الله وبركاته 🌙\n\nWelcome to Deen Buddy! I'm here to help you with Islamic knowledge, guidance, and spiritual support. How may I assist you today? 💚"
     }
   ]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(activeChatId || null);
@@ -111,7 +111,7 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
     setMessages([
       {
         role: "assistant",
-        content: "السلام عليكم ورحمة الله وبركاته 🌙\n\nWelcome to ilm AI! I'm here to help you with Islamic knowledge, guidance, and spiritual support. How may I assist you today? 💚"
+        content: "السلام عليكم ورحمة الله وبركاته 🌙\n\nWelcome to Deen Buddy! I'm here to help you with Islamic knowledge, guidance, and spiritual support. How may I assist you today? 💚"
       }
     ]);
     setCurrentChatId(null);

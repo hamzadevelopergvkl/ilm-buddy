@@ -49,7 +49,7 @@ const Sidebar = ({ activeSection, onSectionChange, isOpen, onClose }: SidebarPro
                 <span className="text-2xl">🕌</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-sidebar-foreground">ilm AI</h1>
+                <h1 className="text-xl font-bold text-sidebar-foreground">Deen Buddy</h1>
                 <p className="text-xs text-sidebar-foreground/60">Your Islamic Companion</p>
               </div>
             </div>
