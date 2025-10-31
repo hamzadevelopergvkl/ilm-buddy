@@ -3,8 +3,13 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
+import { User } from "@supabase/supabase-js";
 
-const Settings = () => {
+interface SettingsProps {
+  user: User | null;
+}
+
+const Settings = ({ user }: SettingsProps) => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 

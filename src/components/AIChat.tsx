@@ -4,13 +4,18 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-const AIChat = () => {
+interface AIChatProps {
+  user: User | null;
+}
+
+const AIChat = ({ user }: AIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
