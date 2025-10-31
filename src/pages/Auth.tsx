@@ -61,7 +61,7 @@ const Auth = () => {
       <Card className="w-full max-w-md p-8 space-y-6 bg-card/95 backdrop-blur border-primary/20">
         <div className="text-center space-y-2">
           <div className="text-5xl mb-4">🕌</div>
-          <h1 className="text-3xl font-bold text-primary">Deen Buddy</h1>
+          <h1 className="text-3xl font-bold text-primary">ilm AI</h1>
           <p className="text-muted-foreground">Your Islamic Companion</p>
         </div>
 
