@@ -269,22 +269,39 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
-          >
+        {messages.map((message, index) => {
+          // Check if message contains an image (markdown or base64)
+          const imageRegex = /!\[.*?\]\((data:image\/[^)]+)\)/;
+          const imageMatch = message.content.match(imageRegex);
+          
+          return (
             <div
-              className={`max-w-[80%] p-4 rounded-2xl ${
-                message.role === "user"
-                  ? "bg-gradient-islamic text-white"
-                  : "bg-card border border-border text-card-foreground"
-              }`}
+              key={index}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
             >
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              <div
+                className={`max-w-[80%] p-4 rounded-2xl ${
+                  message.role === "user"
+                    ? "bg-gradient-islamic text-white"
+                    : "bg-card border border-border text-card-foreground"
+                }`}
+              >
+                {imageMatch ? (
+                  <div className="space-y-3">
+                    <p className="whitespace-pre-wrap">{message.content.replace(imageRegex, '').trim()}</p>
+                    <img 
+                      src={imageMatch[1]} 
+                      alt="Generated Islamic image" 
+                      className="rounded-lg max-w-full h-auto"
+                    />
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {isLoading && (
           <div className="flex justify-start animate-fade-in">
             <div className="bg-card border border-border p-4 rounded-2xl">
