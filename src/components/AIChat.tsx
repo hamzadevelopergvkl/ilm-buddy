@@ -5,6 +5,8 @@ import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Message {
   role: "user" | "assistant";
@@ -273,39 +275,76 @@ const AIChat = ({ user, activeChatId, onChatCreated }: AIChatProps) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
-        {messages.map((message, index) => {
-          // Check if message contains an image (markdown or base64)
-          const imageRegex = /!\[.*?\]\((data:image\/[^)]+)\)/;
-          const imageMatch = message.content.match(imageRegex);
-          
-          return (
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
+          >
             <div
-              key={index}
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
+              className={`max-w-[80%] p-4 rounded-2xl ${
+                message.role === "user"
+                  ? "bg-gradient-islamic text-white"
+                  : "bg-card border border-border text-card-foreground"
+              }`}
             >
-              <div
-                className={`max-w-[80%] p-4 rounded-2xl ${
-                  message.role === "user"
-                    ? "bg-gradient-islamic text-white"
-                    : "bg-card border border-border text-card-foreground"
-                }`}
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  img: ({ node, ...props }) => (
+                    <img className="rounded-lg max-w-full h-auto" {...props} />
+                  ),
+                  a: ({ node, ...props }) => (
+                    <a className="story-link" target="_blank" rel="noreferrer" {...props} />
+                  ),
+                  code({ inline, className, children, ...props }: any) {
+                    return inline ? (
+                      <code className="px-1 py-0.5 rounded bg-muted text-foreground/90" {...props}>
+                        {children}
+                      </code>
+                    ) : (
+                      <pre className="p-3 rounded-lg bg-muted overflow-x-auto">
+                        <code>{children}</code>
+                      </pre>
+                    );
+                  },
+                  h1: ({ children }) => (
+                    <h1 className="text-2xl font-bold my-2">{children}</h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-xl font-bold my-2">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-lg font-semibold my-2">{children}</h3>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="list-disc pl-5 space-y-1">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal pl-5 space-y-1">{children}</ol>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-primary/50 pl-3 italic text-muted-foreground">
+                      {children}
+                    </blockquote>
+                  ),
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full border border-border">{children}</table>
+                    </div>
+                  ),
+                  th: ({ children }) => (
+                    <th className="border border-border px-2 py-1 bg-muted text-left">{children}</th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="border border-border px-2 py-1 align-top">{children}</td>
+                  ),
+                }}
               >
-                {imageMatch ? (
-                  <div className="space-y-3">
-                    <p className="whitespace-pre-wrap">{message.content.replace(imageRegex, '').trim()}</p>
-                    <img 
-                      src={imageMatch[1]} 
-                      alt="Generated Islamic image" 
-                      className="rounded-lg max-w-full h-auto"
-                    />
-                  </div>
-                ) : (
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                )}
-              </div>
+                {message.content}
+              </ReactMarkdown>
             </div>
-          );
-        })}
+          </div>
+        ))}
         {isLoading && (
           <div className="flex justify-start animate-fade-in">
             <div className="bg-card border border-border p-4 rounded-2xl">
