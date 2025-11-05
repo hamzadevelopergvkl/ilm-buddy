@@ -106,9 +106,18 @@ const QiblaFinder = () => {
                 <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
                   Find Qibla Direction
                 </h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Allow location access to calculate the direction to Kaaba in Mecca
+                <p className="text-sm text-muted-foreground mb-4">
+                  Click the button below and allow location access
                 </p>
+                <div className="bg-primary/10 rounded-lg p-4 text-left space-y-2 mb-6">
+                  <p className="text-xs font-medium text-primary">📍 How it works:</p>
+                  <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                    <li>Click "Find Qibla" and allow location access</li>
+                    <li>A compass will appear showing Qibla direction</li>
+                    <li>Point your device so the green arrow points up</li>
+                    <li>Face the direction shown on your device</li>
+                  </ol>
+                </div>
               </div>
               <Button
                 onClick={findQibla}
@@ -154,9 +163,18 @@ const QiblaFinder = () => {
                   <p className="text-lg sm:text-xl font-semibold text-foreground">
                     Qibla Direction: {qiblaDirection.toFixed(1)}°
                   </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Point your device in the direction of the arrow
-                  </p>
+                  <div className="bg-primary/10 rounded-lg p-3 space-y-1">
+                    <p className="text-xs font-medium text-primary">🧭 How to use:</p>
+                    <p className="text-xs text-muted-foreground">
+                      1. Hold your device flat (parallel to ground)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      2. Rotate your body until the green arrow points straight up
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      3. You are now facing the Qibla direction
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -184,12 +202,13 @@ const QiblaFinder = () => {
           )}
 
           <div className="border-t border-border pt-4 space-y-2">
-            <p className="text-xs font-medium text-primary">ℹ️ Tips:</p>
+            <p className="text-xs font-medium text-primary">💡 Important Tips:</p>
             <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Ensure location services are enabled</li>
-              <li>For best results, use in an open area</li>
-              <li>The arrow points towards Kaaba in Mecca</li>
-              <li>Calibrate your device's compass if needed</li>
+              <li>Enable location services in your browser/device settings</li>
+              <li>Hold device flat and level for accurate compass reading</li>
+              <li>Move away from magnetic interference (electronics, metal)</li>
+              <li>For iOS: May need to calibrate compass in Settings app</li>
+              <li>Refresh if compass seems stuck or inaccurate</li>
             </ul>
           </div>
         </Card>

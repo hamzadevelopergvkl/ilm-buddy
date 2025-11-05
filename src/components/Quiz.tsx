@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Progress } from "./ui/progress";
@@ -8,6 +8,11 @@ interface Question {
   options: string[];
   answer: number;
   category: string;
+}
+
+interface ShuffledQuestion extends Question {
+  shuffledOptions: string[];
+  shuffledAnswer: number;
 }
 
 const quizQuestions: Question[] = [
@@ -143,52 +148,54 @@ const quizQuestions: Question[] = [
   { q: "What is Salawat?", options: ["Blessings upon the Prophet", "Prayer", "Fasting", "Charity"], answer: 0, category: "Worship" },
   { q: "What is the Shahada?", options: ["Declaration of faith", "Prayer", "Fasting", "Charity"], answer: 0, category: "Basics" },
   { q: "Complete: 'La ilaha illa...'", options: ["Allah", "Muhammad", "Ibrahim", "Isa"], answer: 0, category: "Basics" },
-  { q: "What does PBUH stand for?", options: ["Peace Be Upon Him", "Prophet Blessed and Holy", "Pure Blessed Upon Him", "Peace Blessing Upon Heaven"], answer: 0, category: "Basics" },
-  { q: "What is the Hijri calendar based on?", options: ["Lunar cycle", "Solar cycle", "Stars", "Seasons"], answer: 0, category: "Calendar" },
-  { q: "How many days are in a Hijri year approximately?", options: ["354-355 days", "365 days", "360 days", "366 days"], answer: 0, category: "Calendar" },
-  { q: "What is the Islamic New Year called?", options: ["Muharram 1st", "Ramadan 1st", "Shawwal 1st", "Dhul Hijjah 1st"], answer: 0, category: "Calendar" },
-  { q: "What is Ashura?", options: ["10th of Muharram", "1st of Muharram", "15th of Shaban", "27th of Ramadan"], answer: 0, category: "Special Days" },
-  { q: "What is significant about 15th of Shaban?", options: ["Night of mid-Shaban", "Night of Power", "Day of Arafah", "Eid"], answer: 0, category: "Special Days" },
-  { q: "What is Salat al-Istikhara?", options: ["Prayer for guidance", "Night prayer", "Funeral prayer", "Eid prayer"], answer: 0, category: "Worship" },
-  { q: "What is Salat al-Tasbih?", options: ["Prayer of glorification", "Night prayer", "Funeral prayer", "Eid prayer"], answer: 0, category: "Worship" },
-  { q: "What is Salat al-Duha?", options: ["Forenoon prayer", "Night prayer", "Afternoon prayer", "Evening prayer"], answer: 0, category: "Worship" },
-  { q: "What is the reward of Laylat al-Qadr?", options: ["Better than 1000 months", "Better than 100 years", "Forgiveness only", "Paradise"], answer: 0, category: "Special Days" },
-  { q: "When is Laylat al-Qadr most likely?", options: ["Last 10 odd nights of Ramadan", "First 10 days", "15th of Ramadan", "Every night"], answer: 0, category: "Special Days" },
-  { q: "What is Fidyah?", options: ["Compensation for missed fasts", "Charity", "Sacrifice", "Prayer"], answer: 0, category: "Worship" },
-  { q: "What is Kaffarah?", options: ["Expiation for breaking oath/fast", "Charity", "Fasting", "Prayer"], answer: 0, category: "Worship" },
-  { q: "What is Zakat al-Fitr?", options: ["Charity at end of Ramadan", "Wealth charity", "Voluntary charity", "Sacrifice"], answer: 0, category: "Worship" },
-  { q: "When must Zakat al-Fitr be paid?", options: ["Before Eid prayer", "After Eid", "During Ramadan", "Anytime"], answer: 0, category: "Worship" },
-  { q: "What is Sadaqah Jariyah?", options: ["Continuous charity", "One-time charity", "Obligatory charity", "Fasting"], answer: 0, category: "Worship" },
-  { q: "What are the sacred months in Islam?", options: ["Muharram, Rajab, Dhul Qa'dah, Dhul Hijjah", "Only Ramadan", "All months", "First four months"], answer: 0, category: "Calendar" },
-  { q: "What is Barakah?", options: ["Divine blessing", "Prayer", "Charity", "Fasting"], answer: 0, category: "Concepts" },
+  { q: "What is Khushoo in prayer?", options: ["Humility and focus", "Standing", "Bowing", "Prostration"], answer: 0, category: "Worship" },
+  { q: "What is Riba?", options: ["Interest/Usury", "Charity", "Trade", "Investment"], answer: 0, category: "Concepts" },
   { q: "What is Rizq?", options: ["Sustenance from Allah", "Wealth", "Food", "Money"], answer: 0, category: "Concepts" },
   { q: "What is Qadar?", options: ["Divine decree", "Prayer", "Fasting", "Charity"], answer: 0, category: "Beliefs" },
   { q: "What are the conditions for Zakat?", options: ["Nisab threshold met, one lunar year passed", "Any amount anytime", "Only during Ramadan", "Only for rich"], answer: 0, category: "Worship" },
 ];
 
 const Quiz = () => {
+  const [shuffledQuestions, setShuffledQuestions] = useState<ShuffledQuestion[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [answered, setAnswered] = useState(false);
 
-  const question = quizQuestions[currentQ];
-  const progress = ((currentQ + 1) / quizQuestions.length) * 100;
+  // Shuffle options when component mounts
+  useEffect(() => {
+    shuffleQuestions();
+  }, []);
+
+  const shuffleQuestions = () => {
+    const shuffled = quizQuestions.map(question => {
+      const correctOption = question.options[question.answer];
+      const shuffledOptions = [...question.options].sort(() => Math.random() - 0.5);
+      const shuffledAnswer = shuffledOptions.indexOf(correctOption);
+      
+      return {
+        ...question,
+        shuffledOptions,
+        shuffledAnswer
+      };
+    });
+    setShuffledQuestions(shuffled);
+  };
 
   const handleAnswer = (optionIndex: number) => {
-    if (answered) return;
+    if (answered || shuffledQuestions.length === 0) return;
     
     setSelected(optionIndex);
     setAnswered(true);
 
-    if (optionIndex === question.answer) {
+    if (optionIndex === shuffledQuestions[currentQ].shuffledAnswer) {
       setScore(score + 1);
     }
   };
 
   const nextQuestion = () => {
-    if (currentQ < quizQuestions.length - 1) {
+    if (currentQ < shuffledQuestions.length - 1) {
       setCurrentQ(currentQ + 1);
       setSelected(null);
       setAnswered(false);
@@ -203,10 +210,23 @@ const Quiz = () => {
     setSelected(null);
     setShowResult(false);
     setAnswered(false);
+    shuffleQuestions(); // Re-shuffle on restart
   };
 
+  if (shuffledQuestions.length === 0) {
+    return (
+      <div className="flex flex-col h-full bg-background items-center justify-center">
+        <div className="text-4xl mb-4">⏳</div>
+        <p className="text-muted-foreground">Loading quiz...</p>
+      </div>
+    );
+  }
+
+  const question = shuffledQuestions[currentQ];
+  const progress = ((currentQ + 1) / shuffledQuestions.length) * 100;
+
   if (showResult) {
-    const percentage = (score / quizQuestions.length) * 100;
+    const percentage = (score / shuffledQuestions.length) * 100;
     return (
       <div className="flex flex-col h-full bg-background">
         <div className="p-4 sm:p-6 border-b border-border bg-card">
@@ -223,7 +243,7 @@ const Quiz = () => {
                 {percentage >= 80 ? "Excellent!" : percentage >= 60 ? "Good Job!" : "Keep Learning!"}
               </h3>
               <p className="text-lg sm:text-xl text-muted-foreground">
-                You scored {score} out of {quizQuestions.length}
+                You scored {score} out of {shuffledQuestions.length}
               </p>
               <p className="text-3xl sm:text-4xl font-bold text-primary mt-4">{percentage.toFixed(1)}%</p>
             </div>
@@ -242,7 +262,7 @@ const Quiz = () => {
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">🧠 Islamic Quiz</h2>
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Question {currentQ + 1} of {quizQuestions.length}</span>
+            <span>Question {currentQ + 1} of {shuffledQuestions.length}</span>
             <span>Score: {score}</span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -261,14 +281,14 @@ const Quiz = () => {
           </div>
 
           <div className="space-y-3">
-            {question.options.map((option, index) => (
+            {question.shuffledOptions.map((option, index) => (
               <button
                 key={index}
                 onClick={() => handleAnswer(index)}
                 disabled={answered}
                 className={`w-full p-3 sm:p-4 text-left rounded-lg border-2 transition-all ${
                   answered
-                    ? index === question.answer
+                    ? index === question.shuffledAnswer
                       ? "border-green-500 bg-green-500/10 text-green-600"
                       : selected === index
                       ? "border-red-500 bg-red-500/10 text-red-600"
@@ -281,7 +301,7 @@ const Quiz = () => {
                 <span className="font-medium text-sm sm:text-base">{option}</span>
                 {answered && (
                   <span className="ml-2">
-                    {index === question.answer ? "✅" : selected === index ? "❌" : ""}
+                    {index === question.shuffledAnswer ? "✅" : selected === index ? "❌" : ""}
                   </span>
                 )}
               </button>
@@ -293,7 +313,7 @@ const Quiz = () => {
               onClick={nextQuestion}
               className="w-full bg-gradient-islamic hover:opacity-90"
             >
-              {currentQ < quizQuestions.length - 1 ? "Next Question →" : "View Results 🎯"}
+              {currentQ < shuffledQuestions.length - 1 ? "Next Question →" : "View Results 🎯"}
             </Button>
           )}
         </Card>
